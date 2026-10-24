@@ -1,365 +1,675 @@
 # Atria Twin — AI-Powered Cardiovascular Digital Twin
-### Submission-ready README skeleton and working project summary
 
-![Python](https://img.shields.io/badge/Python-3.12-blue?logo=python)
-![scikit-learn](https://img.shields.io/badge/scikit--learn-1.9.1-orange?logo=scikit-learn)
-![License](https://img.shields.io/badge/License-MIT-green)
-![Status](https://img.shields.io/badge/Status-Submission%20draft-orange)
+![Python](https://img.shields.io/badge/Python-3.x-blue?logo=python)
+![Streamlit](https://img.shields.io/badge/UI-Streamlit-red?logo=streamlit)
+![Healthcare AI](https://img.shields.io/badge/Domain-Healthcare%20AI-purple)
+![Status](https://img.shields.io/badge/Status-Research%20Prototype-orange)
 
----
+**Team:** S3P
+**Institution:** KPR Institute of Engineering and Technology
+**Project Domain:** Healthcare AI · Digital Twins · Machine Learning · Cardiovascular Simulation
 
-## Submission metadata (draft only; do not publish until the repo is public)
+> **From static health predictions to dynamic cardiovascular insights.**
 
-- Team name: S3P
-- College / institution: KPR Institute of Engineering and Technology
-- Proposed public repo / folder name: `S3P_KPR_Institute_of_Engineering_and_Technology`
-- License: MIT
-- Repo status: not yet public; publish only after all required challenge files are present and verified
-- Public GitHub publication checklist:
-  1. Create the public repo with the exact name above.
-  2. Push the verified working branch after all code and docs are complete.
-  3. Confirm the README, license, project title, architecture link, presentation link, and demo video are live and reachable.
-  4. If a public repo is not yet live, keep links as placeholders and do not claim they are available.
+Atria Twin is a cardiovascular digital-twin research prototype that brings together fictional patient context, longitudinal physiological telemetry, deterministic cardiovascular simulation, and machine-learning experiments in an interactive research environment.
 
-## Challenge requirement checklist
-
-| Requirement | Status | Link or placeholder |
-|---|---|---|
-| Team details and college details | Draft | Pending public repo publish |
-| Project title | Draft | `Atria Twin` |
-| Problem statement and healthcare use case | Draft | To be filled in before public release |
-| Technical stack | Draft | Python 3.12, Streamlit, Plotly, NumPy, pandas, scikit-learn, pytest |
-| AI/ML details | Draft | Synthetic-only digital twin prototype; model and evaluation must be verified before publication |
-| Open-source license | Draft | MIT |
-| Video link (minimum 20 minutes) | Placeholder | `TBA` |
-| Architecture diagram link (PDF/PPT) | Placeholder | `TBA` |
-| Presentation link (PDF/PPT) | Placeholder | `TBA` |
-| Repo public and accessible | Not yet run | TBA |
+**Clinical status: NOT CLINICALLY VALIDATED.** Atria Twin is intended for research and demonstration, not diagnosis, screening, triage, treatment, or medical decision-making.
 
 ---
 
-Atria Twin is a doctor-facing cardiovascular research prototype and multimodal digital twin. It combines static patient/EHR-like context with longitudinal wearable telemetry to estimate the risk of a precisely defined synthetic physiological future-event within a 30-minute forecast horizon.
+## Table of Contents
 
-### Multimodal Future-Event Prediction System
-- **Prediction API**: `predict_future_event(patient_context, telemetry_history, patient_baseline, forecast_horizon_minutes=30)` available from `atria_twin.prediction_api`.
-- **Target Definition**: Evaluates whether within a 30-minute horizon (sampled at 5-minute intervals), at least two consecutive readings satisfy:
-  1. `heart_rate_bpm >= baseline_hr + 18 bpm`
-  2. `rmssd_ms <= baseline_rmssd * 0.65`
-  3. `systolic_mmhg >= baseline_sbp + 15 mmHg`
-- **Leakage-Safe Architecture**: Two-stream pipeline separating static EHR features (`ColumnTransformer` with imputation and encoding) from causal wearable telemetry features (`[t - 30m, t]`). Patient IDs are strictly disjoint between training, validation, and test cohorts.
-- **Model Training & Cohort**: 600 synthetic patient profiles with longitudinal trajectories, 70% train (420 patients), 15% validation (90 patients), 15% test (90 patients).
-- **Held-Out Evaluation Results (1,800 test windows from 90 held-out patients)**:
-  - Multimodal AI Model: **ROC-AUC: 0.9991** | **PR-AUC: 0.9947** | **F1: 0.9751** | **Balanced Acc: 0.9872** | **Precision: 0.9690** | **Recall: 0.9812** | **Specificity: 0.9932** | **Brier Score: 0.0070**
-  - Wearable-Only AI Baseline: **ROC-AUC: 0.9990** | **PR-AUC: 0.9940** | **F1: 0.9750**
-  - Persistence Baseline: **F1: 0.6842**
-- **Artifact Provenance**:
-  - `artifacts/multimodal_twin/multimodal_event_model.joblib`
-  - `artifacts/multimodal_twin/multimodal_evaluation.json`
+* [Overview](#overview)
+* [Problem Statement](#problem-statement)
+* [Research Objectives](#research-objectives)
+* [Key Features](#key-features)
+* [System Architecture](#system-architecture)
+* [Core Research Components](#core-research-components)
+* [Synthetic Future-Event Experiment](#synthetic-future-event-experiment)
+* [Patient-Linked Digital-Twin Replay](#patient-linked-digital-twin-replay)
+* [Dashboard Workspaces](#dashboard-workspaces)
+* [Data Sources and Provenance](#data-sources-and-provenance)
+* [Model Evaluation](#model-evaluation)
+* [Technology Stack](#technology-stack)
+* [Installation and Quick Start](#installation-and-quick-start)
+* [Testing and Reproducibility](#testing-and-reproducibility)
+* [Repository Structure](#repository-structure)
+* [API and Deployment](#api-and-deployment)
+* [Limitations and Responsible Use](#limitations-and-responsible-use)
+* [Future Work](#future-work)
+* [Team](#team)
+* [License](#license)
 
-The default **Digital Twin** workspace links a selected fictional `DEMO-AT-*` record to a seeded five-minute synthetic telemetry replay, a patient-specific baseline, chronological state updates, a multimodal AI future-event risk forecast with calibrated probability and top contributing evidence, and side-by-side comparison with a rule-based linear extrapolation comparator. All replay and scenario state is isolated by patient in the Streamlit session.
+---
 
+## Overview
 
-### Windows PowerShell quick start
+Cardiovascular measurements evolve over time. A single measurement may not show how it differs from a person's baseline, how multiple signals change together, or whether the available observations are incomplete or outdated.
 
-From the canonical project root, run the dashboard using Python with Streamlit on port 8502:
+Atria Twin explores a digital-twin-style workflow for organizing patient context and chronological physiological observations into an interactive environment.
 
-```powershell
-python -m streamlit run atria_twin/app.py --server.port 8502 --browser.gatherUsageStats false
+The project combines several research components:
+
+* **Synthetic patient records:** fictional patient profiles and EHR-like context.
+* **Longitudinal telemetry:** generated physiological measurements and time-series processing.
+* **Multimodal machine learning:** experimental classification against a defined synthetic event rule.
+* **Deterministic cardiovascular simulation:** a separate engine for simulated state transitions and scenarios.
+* **Patient-linked replay:** baseline-relative trend visualization for fictional patient templates.
+* **Exploratory ECG processing:** limited waveform and annotation workflows involving PhysioNet's Long-Term AF Database.
+* **Legacy UCI classification:** a separate model for an existing tabular dataset label.
+* **Research safeguards:** data-readiness checks, provenance controls, validation reports, and automated tests.
+
+These components have different purposes and evidence levels. Their results must not be interpreted as one unified, clinically validated cardiovascular prediction system.
+
+## Problem Statement
+
+Static health-prediction demonstrations often focus on a single row of clinical measurements. They provide limited visibility into the chronological evolution of physiological signals, changes relative to a baseline, and the assumptions behind simulated or model-generated outputs.
+
+Atria Twin explores an alternative research workflow that combines fictional patient context with longitudinal physiological observations, deterministic simulation, and experimental machine learning.
+
+The objective is to make cardiovascular-style data easier to inspect over time while keeping model outputs, synthetic labels, and limitations explicit.
+
+## Research Objectives
+
+1. Develop an interactive cardiovascular digital-twin research interface.
+2. Represent fictional patient profiles and longitudinal physiological observations.
+3. Explore baseline-relative telemetry analysis and chronological replay.
+4. Experiment with multimodal feature processing and synthetic future-event classification.
+5. Compare machine-learning outputs with simpler deterministic or persistence-based approaches where applicable.
+6. Separate simulated behavior from trained model inference and dataset-specific classification.
+7. Maintain transparent data provenance, evaluation evidence, and clinical-use safeguards.
+
+---
+
+## Key Features
+
+### 1. Multimodal research pipeline
+
+The project includes a pipeline intended to combine synthetic patient context with longitudinal physiological telemetry.
+
+The documented signals include heart rate, RMSSD, blood pressure, SpO₂, sleep, activity, and stress-related inputs, depending on the particular workflow.
+
+The exact inputs used by a given model must be confirmed from its feature-extraction code and saved evaluation report.
+
+### 2. Deterministic cardiovascular simulation
+
+The simulation subsystem contains an engine, state definitions, scenario configurations, and visualization components.
+
+It is designed to demonstrate simulated cardiovascular-state transitions and comparisons between illustrative scenarios.
+
+Simulation output is not a real patient's physiological state, and simulation behavior does not by itself establish clinical validity.
+
+### 3. Patient-linked replay
+
+The Digital Twin workflow links fictional patient templates with synthetic telemetry and baseline-relative visualization.
+
+The documented patient-linked forecast path uses a deterministic trend heuristic. It must not be represented as a trained or calibrated patient-specific clinical probability.
+
+### 4. Interactive dashboard
+
+The Streamlit application brings multiple research workflows into one interface, including patient overview, digital-twin replay, clinical assessment, research validation, simulation, and the separate UCI model.
+
+### 5. Research safeguards
+
+The architecture includes data-readiness and provenance-related modules, validation documentation, a model card, and tests for application behavior and safeguards.
+
+These mechanisms support software verification and research transparency. They do not substitute for clinical validation.
+
+---
+
+## System Architecture
+
+### High-level architecture
+
+```mermaid
+flowchart TD
+    subgraph DATA["Data Layer"]
+        EHR["Fictional Synthetic Patient Records"]
+        TELEMETRY["Synthetic Longitudinal Telemetry"]
+        PHYSIONET["PhysioNet LTAFDB Records / Annotations"]
+        UCI["UCI Heart-Disease Tabular Dataset"]
+    end
+
+    subgraph PROCESSING["Processing and Research Layer"]
+        WORKFLOW["Patient Workflow and Context Fusion"]
+        ADAPTER["PhysioNet Data Adapter"]
+        GATE["Data Readiness and Provenance Gates"]
+        PIPELINE["Multimodal Feature Pipeline"]
+        SIMULATION["Deterministic Cardiovascular Simulation"]
+        UCI_MODEL["Separate UCI Classifier"]
+    end
+
+    subgraph MODELS["Experimental Model Layer"]
+        ML["Synthetic Future-Event Classifier"]
+        REPLAY["Patient-Linked Trend Heuristic"]
+    end
+
+    subgraph PRESENTATION["Presentation Layer"]
+        APP["Streamlit Research Dashboard"]
+        DT["Digital Twin"]
+        OVERVIEW["Patient Overview"]
+        ASSESSMENT["Clinical Assessment"]
+        VALIDATION["Research and Validation"]
+        SIM_UI["Simulation Workspace"]
+        UCI_UI["UCI Model and Telemetry"]
+    end
+
+    EHR --> WORKFLOW
+    TELEMETRY --> PIPELINE
+    WORKFLOW --> PIPELINE
+    PHYSIONET --> ADAPTER
+    ADAPTER --> GATE
+    PIPELINE --> ML
+    WORKFLOW --> REPLAY
+    WORKFLOW --> SIMULATION
+    UCI --> UCI_MODEL
+
+    ML --> APP
+    REPLAY --> APP
+    SIMULATION --> APP
+    WORKFLOW --> APP
+    GATE --> APP
+    UCI_MODEL --> APP
+
+    APP --> DT
+    APP --> OVERVIEW
+    APP --> ASSESSMENT
+    APP --> VALIDATION
+    APP --> SIM_UI
+    APP --> UCI_UI
 ```
 
-Open [http://127.0.0.1:8502/](http://127.0.0.1:8502/).
+This diagram represents the documented conceptual architecture. It does not imply that all components share one model or that every input source contributes to every output.
 
-To run the complete automated test suite:
+### Architectural principles
 
-```powershell
-pytest -q tests/
-```
+* **Separation of tasks:** synthetic-event classification, deterministic replay, cardiovascular simulation, and UCI classification remain distinct.
+* **Temporal discipline:** forecasting features should use only observations available at prediction time. This property must be verified in the specific implementation before claiming leakage-free evaluation.
+* **Data provenance:** external data workflows should record source, version, record boundaries, and annotation assumptions.
+* **Explicit synthetic scope:** generated profiles, simulated states, and generated labels must be identified as such.
+* **Clinical safeguards:** the interface must not imply a validated diagnosis or probability where none is computed.
+* **Reproducibility:** reported metrics should be traceable to the corresponding model artifact, evaluation report, and split definition.
 
-### Vercel Serverless Prediction API
+### Core implementation modules
 
-The project includes production-ready Vercel serverless functions in [`api/`](./api):
-- **Health Check (`GET /api/health`)**: Returns service status, version, and runtime metadata.
-- **Multimodal Prediction (`POST /api/predict`, `GET /api/predict`)**:
-  - `GET /api/predict`: Returns API contract, schema, and sample payload documentation.
-  - `POST /api/predict`: Evaluates longitudinal patient context and telemetry history, returning full risk probability, confidence, risk category, and feature attributions.
+| Module                                              | Responsibility described in the project                        |
+| --------------------------------------------------- | -------------------------------------------------------------- |
+| `atria_twin/app.py`                                 | Main Streamlit application                                     |
+| `atria_twin/patient_dashboard.py`                   | Patient-facing dashboard workspaces                            |
+| `atria_twin/patient_records.py`                     | Fictional patient records and EHR-like context                 |
+| `atria_twin/patient_workflow.py`                    | Patient navigation and timeline synthesis                      |
+| `atria_twin/patient_twin_pipeline.py`               | Telemetry windowing, baseline computation, and feature fusion  |
+| `atria_twin/multimodal_pipeline.py`                 | Multimodal feature extraction, model definition, and inference |
+| `atria_twin/model_validation.py`                    | Model-validation status and evaluation evidence                |
+| `atria_twin/validate_multimodal_model.py`           | Validation and benchmark-generation script                     |
+| `atria_twin/train_multimodal_model.py`              | Multimodal model training pipeline                             |
+| `atria_twin/data_readiness.py`                      | Data ingestion and readiness checks                            |
+| `atria_twin/data_gate.py`                           | Provenance and anti-fabrication checks                         |
+| `atria_twin/forecast_dashboard.py`                  | Forecast visualizations                                        |
+| `atria_twin/prediction_api.py`                      | Prediction interface                                           |
+| `atria_twin/runtime_dependencies.py`                | Runtime dependency checks                                      |
+| `atria_twin/MODEL_CARD.md`                          | Intended use, limitations, and safety documentation            |
+| `atria_twin/simulation/engine.py`                   | Deterministic cardiovascular simulation engine                 |
+| `atria_twin/simulation/scenarios.py`                | Simulation scenarios                                           |
+| `atria_twin/simulation/state.py`                    | Simulation state definitions and invariants                    |
+| `atria_twin/simulation/visualization.py`            | Simulation trend visualizations                                |
+| `atria_twin/ui/theme.py`                            | UI styling                                                     |
+| `atria_twin/ui/charts.py`                           | Chart components                                               |
+| `atria_twin/ui/heart_3d.py`                         | 3D heart visualization component                               |
+| `atria_twin/datasets/physionet_wearable_adapter.py` | PhysioNet/LTAFDB adapter                                       |
+| `atria_twin/datasets/physionet_wearable_preview.py` | Wearable-data preview workspace                                |
+| `api/predict.py`                                    | HTTP prediction endpoint source                                |
+| `api/health.py`                                     | HTTP health endpoint source                                    |
 
-### Dashboard workspaces
+Verify these paths against the final repository before publication.
 
-| Workspace | What it currently shows |
-|---|---|
-| **Digital Twin** (default) | Selected synthetic patient, deterministic session-isolated telemetry replay, baseline-relative chronological twin state, missingness/freshness, manual session-only telemetry overrides, and a 30-minute patient-linked fixed trend heuristic. Neutral sleep/activity/stress controls compare baseline and scenario outputs side by side. All values and outcomes are synthetic. |
-| **Patient Overview** | Inspect the selected synthetic patient's history, diagnoses, medications, labs, BP, wearable observations, provenance and trends; navigate directly to that patient's twin. |
-| **Clinical Assessment** | Compact, unvalidated-risk status, grouped record summaries, missing/stale information and a collapsed detailed factor inventory; no probability is computed. |
-| **Research & Validation** | Strict LTAFDB validation, acquisition state, Record 30 policy, causal feature gate and model/evaluation evidence, kept separate from fictional records. |
-| **Synthetic Clinic · Simulation** | The pre-existing separate fictional HR/RMSSD replay with an illustrative CUSUM; never an AF prediction or clinical alert. |
-| **UCI Model + Telemetry** | Separate classifier output for held-out UCI prevalent `num > 0` records and the unlinked illustrative HR/RMSSD replay. |
+---
 
-### Combined-input simulation model and last verified evaluation
+## Core Research Components
 
-| Setting | Implementation |
-|---|---|
-| Static input | 13 available UCI clinical feature fields, used as unlinked context templates; dataset target and record ID are excluded from features. |
-| Dynamic input | Generated HR, RMSSD, systolic/diastolic BP, SpO₂, sleep, daily steps, and stress time series, with seeded sensor dropouts. |
-| Observation / forecast | Trailing 30 minutes, sampled each 5 minutes; forecast the next 30 minutes. |
-| Target | Two consecutive future samples meet the documented HR/RMSSD/systolic-pressure thresholds relative to the synthetic profile's first-30-minute baseline. |
-| Model / split | Median/mode imputation, scaling, one-hot encoding and class-weighted logistic regression; reproducible 300-profile training command, with patient groups and UCI context rows assigned disjointly. |
-| Verified runtime v2 run | 300 generated profiles (225 train / 75 holdout), seed `240823`; 1,500 held-out windows (1,274 negative / 226 positive generated labels). The v2 artifact and report in the serving copy were reproduced in the isolated verification environment; see [COPY_COMPARISON.md](COPY_COMPARISON.md). The source-tree combined-model artifact remains v1 and was not replaced. |
-| v2 metrics at fixed 0.50 threshold | Accuracy 0.9673; precision 0.8340; recall 0.9779; F1 0.9002; AUROC 0.9864. Confusion matrix, truth rows and predicted columns `[0,1]`: `[[1230,44],[5,221]]`. |
+### A. Multimodal synthetic-event experiment
 
-The v2 combined-input model evaluates consistency with generated simulator rules only. It is not a real event predictor, clinical validation, calibration study, or external validation. The source `.venv` remains broken for SciPy; verification used a separate isolated environment. The patient-linked default Digital Twin uses the distinct fixed-rule path described below. The independent UCI `num > 0` classifier is a different prevalent-label task.
+This experiment uses generated patient context and physiological time-series windows to classify a synthetic event label.
 
-The hand-authored patient directory and its simulations remain distinct from the combined model's generated profiles; the patient-facing Clinical Assessment continues to report **clinical risk estimate unavailable**. Patient replay state and manual overrides last only for the Streamlit browser session; reset restores the seeded stream. Scenario controls compare the unmodified baseline to the same patient-linked pipeline after documented illustrative adjustments. The existing main-timeline Reset to Baseline control resets its widgets through a callback before rerender. See [patient twin workflow and limitations](docs/PATIENT_TWIN_WORKFLOW.md).
+Its evaluation measures agreement with the synthetic label-generation process—not prediction of real cardiovascular emergencies.
 
-For the repeatable 24-minute presenter-led walkthrough, see [docs/SUMMIT_DEMO_SCRIPT.md](docs/SUMMIT_DEMO_SCRIPT.md) and the [recording checklist](deliverables/DEMO_RECORDING_CHECKLIST.md). The final narrated video is not yet recorded.
+### B. Patient-linked deterministic replay
 
-### Repository map
+This workflow uses fictional patient templates and timestamped synthetic telemetry to visualize baseline-relative changes.
+
+The documented replay uses a fixed trend heuristic rather than the trained multimodal model. Its output must be labelled as simulated and heuristic.
+
+### C. Cardiovascular simulation engine
+
+The simulation subsystem defines state transitions and illustrative physiological scenarios.
+
+It is separate from both the synthetic classifier and the patient-linked trend heuristic. Its simulated outputs should not be presented as clinical observations or proof of physiological accuracy.
+
+### D. UCI heart-disease classifier
+
+The legacy tabular pipeline predicts an existing UCI dataset label, described in this project as `num > 0`.
+
+It is a separate classification task and is not a prospective cardiovascular-event model.
+
+### E. Exploratory ECG workflow
+
+The project contains an exploratory workflow for PhysioNet LTAFDB records and annotations.
+
+The described work is limited and does not establish validated atrial-fibrillation detection or prediction capability.
+
+---
+
+## Synthetic Future-Event Experiment
+
+### Target definition
+
+The described synthetic event rule labels an event when at least two consecutive future five-minute readings within a 30-minute horizon satisfy all of the following conditions relative to the generated baseline:
 
 ```text
-atria_twin/       Streamlit app, UCI model, synthetic patient records/fusion, simulation, and gated LTAFDB research workflow
-artifacts/        Research-readiness reports and reproducible static-model outputs
-deliverables/     Architecture PDF/PPTX and summit presentation PDF/PPTX
-docs/             Status, demo script, slide outline, and editable architecture source
-tests/            Python unittest suite
-tools/            Reproducible slide generation and PowerPoint PDF export helpers
-work/             Local source data and resumable acquisition state; not complete research waveforms
+heart_rate_bpm >= baseline_hr + 18
+rmssd_ms <= baseline_rmssd * 0.65
+systolic_mmhg >= baseline_sbp + 15
 ```
 
-The app's current navigation workspaces and truthful summit walkthrough are described in the [24-minute demo script](docs/SUMMIT_DEMO_SCRIPT.md). For the editable architecture source and status of existing exports, see [the architecture diagram](docs/architecture.mmd) and [architecture notes](docs/ARCHITECTURE.md). The generated deck is a visual companion, not a direct Mermaid render. Test passes indicate software behavior only; they are not clinical evidence.
+This is a generated anomaly/event rule. It is **not a clinically established definition** of a heart attack, stroke, or major adverse cardiovascular event.
 
-### Patient-linked replay and evaluation
+A model trained on these labels may learn the rules embedded in the generator. High performance therefore does not establish real-world clinical performance.
 
-The patient-linked replay/forecast implementation is versioned separately as `patient-linked-synthetic-trend-v1.1`; it does not overwrite the previous combined-input v1/v2 models. It uses a 30-minute trailing window of seven timestamped readings sampled every five minutes, then linearly projects HR, RMSSD, and systolic BP over the next 30 minutes. The synthetic target is positive when at least two consecutive future 5-minute readings exceed the patient's recorded synthetic baseline by HR +18 bpm, RMSSD at or below 65% of baseline, and systolic BP +15 mmHg. This is a generated anomaly rule, not a clinical event.
+### Reported evaluation runs
 
-Replay controls are patient/session-scoped: start/resume, pause, step, reset, and 1x/2x/4x playback. Baseline is held at the latest synthetic EHR-like wearable/BP record and is not updated from replay, so generated deviations cannot contaminate it. Forecast input uses only observations at or before the current replay cursor; the forecast is unavailable with an incomplete/gapped 30-minute window or insufficient valid readings for key sensors. Scenario changes are explicit illustrative perturbations, not causal medical effects. Streamlit session state persists through reruns, but not through a new browser session or server restart.
+Development notes contain metrics from different experiments. The runs must remain separate.
 
-Reproduce the grouped synthetic rule evaluation in the isolated project environment:
+| Evaluation                       | Reported setup                                                                             | Reported results                                                                                                                                            | Qualification                                                          |
+| -------------------------------- | ------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| Earlier synthetic-window run     | 1,800 held-out windows from 90 synthetic patients                                          | ROC-AUC `0.9991`; PR-AUC `0.9947`; F1 `0.9751`; balanced accuracy `0.9872`; precision `0.9690`; recall `0.9812`; specificity `0.9932`; Brier score `0.0070` | Verify against the matching saved evaluation report before publication |
+| Earlier wearable-only comparison | Separate model comparison                                                                  | ROC-AUC `0.9990`; PR-AUC `0.9940`; F1 `0.9750`; persistence baseline F1 `0.6842`                                                                            | Does not establish that multimodal inputs improve performance          |
+| Separate v2 synthetic-cohort run | 300 generated profiles: 225 training and 75 holdout; 1,500 held-out windows; seed `240823` | Accuracy `0.9673`; precision `0.8340`; recall `0.9779`; F1 `0.9002`; AUROC `0.9864`; confusion matrix `[[1230, 44], [5, 221]]`                              | Separate run with its own artifact and report                          |
+
+**These values are not one combined metric set.** Before publishing them as verified results, inspect the matching evaluation reports, model artifacts, split definitions, and target configurations. Remove any result that cannot be traced to its corresponding experiment.
+
+Artifact paths referenced in development notes include:
+
+```text
+artifacts/multimodal_twin/multimodal_event_model.joblib
+artifacts/multimodal_twin/validation_metrics.json
+artifacts/multimodal_twin/validation_report.md
+```
+
+Earlier versions may use a different evaluation filename. Confirm the actual files in the release commit.
+
+### Interpreting the results
+
+* ROC-AUC measures ranking performance across thresholds.
+* PR-AUC depends on the prevalence of the positive class.
+* Precision and recall depend on the selected operating threshold.
+* Brier score alone does not establish calibration.
+* Patient/profile-separated splits can reduce leakage risk, but the implementation and split manifest must be inspected before claiming leakage-free evaluation.
+* Synthetic-only evaluation does not establish external clinical validity or clinical utility.
+
+---
+
+## Patient-Linked Digital-Twin Replay
+
+Development notes describe the versioned workflow `patient-linked-synthetic-trend-v1.1`.
+
+The replay is based on three fictional patient templates. It uses seven timestamped readings sampled at five-minute intervals—approximately a 30-minute trailing window—and linearly projects selected measurements over the following 30 minutes.
+
+The replay is intended to demonstrate:
+
+* Chronological synthetic telemetry playback.
+* Baseline-relative heart-rate, RMSSD, and systolic blood-pressure trends.
+* Missing or incomplete observation-window handling.
+* Session-scoped playback and manual illustrative overrides.
+* Comparison of baseline and illustrative scenario views.
+
+The patient-linked replay is a **deterministic trend heuristic**, not a trained or calibrated patient-specific clinical probability. Scenario changes are illustrative perturbations, not proof of causal medical effects.
+
+A development note documents this evaluation command:
 
 ```powershell
 $env:PYTHONDONTWRITEBYTECODE = '1'
 python -m atria_twin.evaluate_patient_twin --episodes-per-patient 100 --seed 20261023
 ```
 
-The command writes once to `artifacts/patient_twin_forecast_v1_1/evaluation.json` and refuses to overwrite a non-matching report. This fixed rule has no fitting/training split; its evaluation is grouped by three hand-authored synthetic patient templates and compares against a last-reading persistence baseline. Its metrics are simulator agreement only; three templates do not support population generalization, and no confidence interval or calibrated probability is reported. For the evidence and current challenge gaps, see [CHALLENGE_COMPLIANCE_AUDIT.md](CHALLENGE_COMPLIANCE_AUDIT.md).
-
-### Dataset provenance and use
-
-The AF research source is the PhysioNet Long Term AF Database (LTAFDB), version 1.0.0. Stage 12 records the official version-specific page's ODC Attribution License v1.0 designation and required citation/annotation acknowledgements. The currently approved cohort is limited to the five records above; execution was attempted and stopped incomplete. No new transfers are performed as part of this package. The separate cross-sectional classifier uses the local UCI `heart_disease_uci.csv` and its existing `num` labels. All code, source-data and research-use conditions must be reviewed before publication or redistribution.
-
-**Software licence:** project code is licensed under the [MIT License](LICENSE), selected by the owner. This does not relicense UCI or PhysioNet datasets, legacy assets, or third-party dependencies; review their separate terms before redistribution.
-
-**Ethical and clinical-use notice:** the UCI classifier reproduces a prevalent dataset label and is not a patient-specific/future risk model. Patient profiles and simulated telemetry are fictional, not clinical observations. The project is not clinically validated and must not be used for diagnosis, screening, triage, treatment, or care decisions.
+Run it only if the referenced module exists in the release version. Verify the output and evaluation report before using them as evidence. An evaluation involving three hand-authored synthetic templates does not establish generalization to a wider population.
 
 ---
 
-## 📌 Project Overview
+## Dashboard Workspaces
 
-This project builds an end-to-end **Machine Learning pipeline** to predict heart disease risk from patient clinical data. It was developed as a portfolio project during the **Thiranex AI Internship**.
+The following descriptions reflect the supplied project summary. Confirm the current application renders each workspace before treating it as a verified release feature.
 
-The pipeline covers the full ML lifecycle:
-- Automated data loading (UCI Heart Disease dataset or synthetic fallback)
-- Preprocessing with imputation, encoding, and scaling
-- Exploratory Data Analysis with rich visualizations
-- Training and comparing 4 models (Logistic Regression, Decision Tree, Random Forest, Tuned RF)
-- GridSearchCV hyperparameter tuning + 5-fold cross-validation
-- Automatic best model selection and persistence
-- Interactive prediction CLI with confidence scores
+| Workspace                         | Purpose                                                                                                                         | Important boundary                                                                              |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| **Digital Twin**                  | Selected fictional patient, synthetic telemetry replay, baseline-relative state, missingness/freshness, and trend visualization | Patient-linked forecast is heuristic unless a different verified model is explicitly identified |
+| **Patient Overview**              | Fictional patient context, diagnoses, medications, labs, blood pressure, wearable observations, and trends                      | Demonstration data are not real medical records                                                 |
+| **Clinical Assessment**           | Grouped summaries, missing/stale information, and assessment status                                                             | Should report clinical risk as unavailable when no validated clinical probability is computed   |
+| **Research & Validation**         | Data readiness, provenance checks, model evidence, and exploratory LTAFDB workflow                                              | Data validation does not establish AF prediction or clinical validity                           |
+| **Synthetic Clinic / Simulation** | Fictional HR/RMSSD replay and illustrative change-detection or scenario visualization                                           | Not a validated AF prediction or clinical alert                                                 |
+| **UCI Model + Telemetry**         | Separate UCI prevalent-label classifier and illustrative telemetry view                                                         | The classifier is not a future-event forecast                                                   |
+| **Wearable Laboratory / Preview** | Recorded-data preview or adapter workflow, where available                                                                      | Depends on data acquisition and readiness status                                                |
 
 ---
 
-## 📁 Project Structure
+## Data Sources and Provenance
 
+### Synthetic data
+
+Synthetic patient profiles and generated physiological time series support interface demonstrations and controlled experiments. They are not observations from real patients.
+
+The generated distributions and event labels may not represent real clinical populations. Evaluation depends on the generator, feature definitions, class balance, and split strategy.
+
+### UCI heart-disease dataset
+
+The legacy tabular pipeline uses a local UCI heart-disease CSV and is described as predicting the existing `num > 0` label.
+
+This is a prevalent-label classification task—not prospective cardiovascular-event prediction.
+
+Before redistributing the included CSV, verify the exact source, version, license, attribution requirements, and permission to include it in the repository.
+
+### PhysioNet Long-Term AF Database
+
+Development notes identify PhysioNet's Long-Term AF Database (LTAFDB), version 1.0.0, as the source for the exploratory ECG workflow.
+
+The described process includes record metadata, WFDB parsing, annotation-bound checks, and provenance validation. The approved cohort was reported as limited to five records, and acquisition/execution was described as incomplete.
+
+The project therefore does not claim a complete LTAFDB cohort analysis or a validated AF detection/prediction model.
+
+Before publishing data or derived outputs, verify the exact source page, license, required citation, annotation acknowledgements, record list, and acquisition status.
+
+### Data governance checklist
+
+* [ ] Identify synthetic versus externally sourced data.
+* [ ] Record dataset name, version, source, and license.
+* [ ] Preserve required citations and acknowledgements.
+* [ ] Remove private patient data, credentials, access tokens, and secrets.
+* [ ] Keep incomplete downloads and local acquisition state out of the release unless intentionally required and permitted.
+* [ ] Trace model artifacts to their training and evaluation code.
+
+---
+
+## Model Evaluation
+
+Every experiment should document:
+
+1. Dataset or generator version.
+2. Target definition and forecast horizon.
+3. Feature set and preprocessing.
+4. Train/validation/test split strategy.
+5. Patient/profile grouping rules.
+6. Random seed and software environment.
+7. Class prevalence and confusion matrix.
+8. Metric definitions and decision threshold.
+9. Model artifact and evaluation-report paths.
+10. Baselines, limitations, and reproduction instructions.
+
+A development summary reports **220 tests passing with zero warnings**. Treat this as a reported development result, not a guarantee about the current public commit. Re-run the tests against the exact release version before claiming the result.
+
+Passing software tests demonstrate software behavior covered by those tests. They do not establish clinical validity, safety, calibration, or generalization.
+
+---
+
+## Technology Stack
+
+The supplied architecture indicates use of the following technologies. Confirm the final dependencies and versions from the release environment.
+
+* **Python** — application and modelling code.
+* **Streamlit** — interactive dashboard.
+* **scikit-learn** — machine-learning components.
+* **pandas / NumPy** — tabular and numerical processing.
+* **joblib** — supported model-artifact serialization.
+* **Plotly** — interactive charting, where used.
+* **Matplotlib** — visualizations, where used.
+* **WFDB** — waveform and annotation workflows, where installed.
+* **pytest** — testing, if configured in the release environment.
+* **Three.js / WebGL** — 3D heart visualization, if included and functioning in the release UI.
+
+Do not publish a precise dependency-version badge unless the version is confirmed by the final environment and dependency files.
+
+---
+
+## Installation and Quick Start
+
+### 1. Clone the repository
+
+After the public GitHub repository has been created, replace the placeholders with its actual URL and directory name:
+
+```powershell
+git clone <PUBLIC_REPOSITORY_URL>
+cd <REPOSITORY_DIRECTORY>
 ```
-heart_disease_ml/
-├── data/
-│   └── heart.csv                    # Dataset (auto-generated if absent)
-├── src/
-│   ├── __init__.py
-│   ├── data_loader.py               # Data loading & preprocessing pipeline
-│   ├── eda.py                       # EDA: stats, plots, distributions
-│   ├── model_trainer.py             # Model definitions, training, evaluation
-│   ├── visualizer.py                # All evaluation visualizations
-│   └── predictor.py                 # Inference module (CLI + programmatic)
-├── models/
-│   ├── best_model.joblib            # Serialised best model
-│   ├── scaler.joblib                # Fitted StandardScaler
-│   └── feature_names.joblib         # Encoded feature list
-├── notebooks/
-│   └── heart_disease_analysis.ipynb # Full walkthrough notebook
-├── visualizations/
-│   ├── 01_class_balance.png
-│   ├── 02_correlation_heatmap.png
-│   ├── 03_feature_distributions.png
-│   ├── 04_categorical_counts.png
-│   ├── 05_confusion_matrices.png
-│   ├── 06_roc_curves.png
-│   ├── 07_feature_importance.png
-│   ├── 08_metrics_comparison.png
-│   └── 09_cross_validation.png
-├── main.py                          # Pipeline entry point
+
+### 2. Create a virtual environment
+
+On Windows PowerShell:
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+```
+
+### 3. Install dependencies
+
+If a verified `requirements.txt` exists:
+
+```powershell
+python -m pip install -r requirements.txt
+```
+
+### 4. Launch the dashboard
+
+From the project root:
+
+```powershell
+python -m streamlit run atria_twin/app.py --server.port 8503 --browser.gatherUsageStats false
+```
+
+Open the local application:
+
+```text
+http://127.0.0.1:8503/
+```
+
+The supplied architecture identifies port `8503`. If the actual application configuration uses another port, follow the checked-in configuration and update this README accordingly.
+
+### 5. Stop the application
+
+Press `Ctrl+C` in the terminal running Streamlit.
+
+---
+
+## Testing and Reproducibility
+
+If the repository contains the documented `tests/` directory and required test dependencies, run:
+
+```powershell
+python -m pytest -q tests/
+```
+
+For a release or competition submission, record the exact command, environment, pass/fail counts, warnings, and skipped tests.
+
+### Release checklist
+
+* [ ] The application starts from a clean environment.
+* [ ] Required model and data artifacts are present.
+* [ ] All documented module paths and commands exist.
+* [ ] Tests pass on the exact release commit.
+* [ ] Evaluation reports match the README metrics.
+* [ ] Target definitions and split strategies are documented.
+* [ ] Synthetic and externally sourced data are distinguished.
+* [ ] No private files, secrets, or unnecessary local files are committed.
+* [ ] API routes have been tested if presented as usable.
+* [ ] License and third-party data terms have been reviewed.
+
+---
+
+## Repository Structure
+
+This tree consolidates the architecture supplied for the project. Verify each path against the release commit before treating it as an exact inventory.
+
+```text
+Thiranex--Heart-Disease-Prediction-Model-Using-ML-main/
+├── atria_twin/
+│   ├── app.py
+│   ├── patient_dashboard.py
+│   ├── patient_records.py
+│   ├── patient_workflow.py
+│   ├── patient_twin_pipeline.py
+│   ├── multimodal_pipeline.py
+│   ├── model_validation.py
+│   ├── validate_multimodal_model.py
+│   ├── train_multimodal_model.py
+│   ├── data_readiness.py
+│   ├── data_gate.py
+│   ├── forecast_dashboard.py
+│   ├── prediction_api.py
+│   ├── runtime_dependencies.py
+│   ├── MODEL_CARD.md
+│   ├── README.md
+│   ├── simulation/
+│   │   ├── engine.py
+│   │   ├── scenarios.py
+│   │   ├── state.py
+│   │   └── visualization.py
+│   ├── ui/
+│   │   ├── theme.py
+│   │   ├── charts.py
+│   │   └── heart_3d.py
+│   └── datasets/
+│       ├── physionet_wearable_adapter.py
+│       └── physionet_wearable_preview.py
+├── api/
+│   ├── predict.py
+│   └── health.py
+├── artifacts/
+│   ├── multimodal_twin/
+│   ├── patient_twin_forecast_v1/
+│   ├── patient_twin_forecast_v1_1/
+│   ├── simulated_forecast/
+│   └── static_model/
+├── tests/
+├── simulation/
+├── ui/
+├── datasets/
+├── app.py
+├── main.py
+├── model_trainer.py
+├── predictor.py
+├── data_loader.py
+├── eda.py
+├── visualizer.py
+├── heart.csv
+├── heart_disease_uci.csv
+├── best_model.joblib
+├── scaler.joblib
 ├── requirements.txt
+├── vercel.json
+├── CHALLENGE_COMPLIANCE_AUDIT.md
+├── EVENT_COMPLIANCE.md
+├── LICENSE
 └── README.md
 ```
 
----
+Additional paths mentioned in development notes include:
 
-## ⚙️ Installation
+* `COPY_COMPARISON.md`
+* `docs/PATIENT_TWIN_WORKFLOW.md`
+* `docs/SUMMIT_DEMO_SCRIPT.md`
+* `docs/architecture.mmd`
+* `docs/ARCHITECTURE.md`
+* `deliverables/DEMO_RECORDING_CHECKLIST.md`
 
-```bash
-# 1. Clone the repository
-git clone https://github.com/yourusername/heart-disease-ml.git
-cd heart-disease-ml
-
-# 2. Create a virtual environment (recommended)
-python -m venv venv
-source venv/bin/activate          # Windows: venv\Scripts\activate
-
-# 3. Install dependencies
-pip install -r requirements.txt
-```
-
-**requirements.txt**
-```
-numpy>=1.24.0
-pandas>=2.0.0
-scikit-learn>=1.3.0
-matplotlib>=3.7.0
-seaborn>=0.12.0
-joblib>=1.3.0
-```
+Include these only if they exist in the release commit. Remove absent paths and avoid committing virtual environments, caches, secrets, or unnecessary local data downloads.
 
 ---
 
-## 🚀 Usage
+## API and Deployment
 
-### Run the full pipeline
-```bash
-python main.py
-```
-This will:
-1. Load / generate the dataset → `data/heart.csv`
-2. Run EDA and save visualizations → `visualizations/`
-3. Train all 4 models and evaluate them
-4. Tune Random Forest with GridSearchCV
-5. Save the best model → `models/best_model.joblib`
-6. Run a demo prediction on a sample patient
+The supplied repository layout includes:
 
-### Interactive prediction
-```bash
-python main.py --predict
-```
-Prompts for each clinical feature and returns:
-- Prediction label: **RISK** or **NO RISK**
-- Confidence score (%)
-- Full probability breakdown
-
-### Use predictor programmatically
-```python
-import joblib
-from src.predictor import predict
-
-model         = joblib.load("models/best_model.joblib")
-scaler        = joblib.load("models/scaler.joblib")
-feature_names = joblib.load("models/feature_names.joblib")
-
-patient = {
-    "age": 62, "sex": 1, "cp": 0,
-    "trestbps": 150, "chol": 260, "fbs": 1,
-    "restecg": 1, "thalach": 130, "exang": 1,
-    "oldpeak": 3.2, "slope": 2, "ca": 2, "thal": 3
-}
-
-result = predict(patient, model, scaler, feature_names)
-print(result["label"])        # ⚠️  RISK — Heart Disease Likely
-print(result["confidence"])   # 0.913
+```text
+api/predict.py
+api/health.py
+vercel.json
 ```
 
-### Jupyter notebook
-```bash
-cd notebooks
-jupyter notebook heart_disease_analysis.ipynb
-```
+These files indicate an intended API/deployment path. Their presence alone does not establish that a service is deployed, reachable, secure, or production-ready.
+
+The described routes are:
+
+* `GET /api/health` — health/readiness endpoint, if implemented.
+* `GET /api/predict` — prediction contract or schema response, if implemented.
+* `POST /api/predict` — prediction endpoint, if implemented.
+
+Before claiming the API is operational, verify the actual request and response schemas, input validation, model loading, error handling, dependency packaging, and deployment logs.
+
+After deployment, test the real public endpoints and document the URL and known limitations. Do not label the API production-ready without a supporting review.
 
 ---
 
-## 📊 Dataset
+## Limitations and Responsible Use
 
-**Source:** UCI Heart Disease Dataset (Cleveland subset, 303 patients, 13 features)
+**Atria Twin is a research prototype. It is not intended for diagnosis, screening, triage, treatment, emergency detection, or medical decision-making.**
 
-| Feature    | Description                                      |
-|------------|--------------------------------------------------|
-| `age`      | Age in years                                     |
-| `sex`      | Sex (1 = Male, 0 = Female)                       |
-| `cp`       | Chest pain type (1–4 in the checked-in CSV)           |
-| `trestbps` | Resting blood pressure (mm Hg)                   |
-| `chol`     | Serum cholesterol (mg/dl)                        |
-| `fbs`      | Fasting blood sugar > 120 mg/dl (1 = True)       |
-| `restecg`  | Resting ECG results (0–2)                        |
-| `thalach`  | Maximum heart rate achieved                      |
-| `exang`    | Exercise-induced angina (1 = Yes)                |
-| `oldpeak`  | ST depression induced by exercise                |
-| `slope`    | Slope of peak exercise ST segment (1–3 in the checked-in CSV) |
-| `ca`       | Number of major vessels coloured by fluoroscopy  |
-| `thal`     | Thalassemia code (3, 6, or 7 in the checked-in CSV)   |
-| `target`   | **0 = absent, 1 = present heart disease** (binarised) |
+Its current evidence boundaries include:
 
----
+* Synthetic data and generated event labels do not represent a validated clinical cohort or endpoint.
+* High synthetic test metrics do not establish real-world performance.
+* The patient-linked replay uses fictional templates and a deterministic trend heuristic.
+* The cardiovascular simulation engine is not, by itself, a validated model of an individual patient's physiology.
+* The UCI classifier predicts an existing dataset label, not future cardiovascular risk.
+* The LTAFDB workflow is exploratory and does not establish validated AF prediction capability.
+* Missing, delayed, noisy, or device-specific measurements can affect downstream analysis.
+* No claim is made here of prospective validation, external clinical validation, clinical utility, fairness validation, regulatory approval, or production deployment.
 
-## 🤖 Models & Results
+### Requirements before clinical use
 
-| Model                    | Accuracy | Precision | Recall | F1     | ROC-AUC |
-|--------------------------|----------|-----------|--------|--------|---------|
-| Logistic Regression      | 0.8525   | 0.8387    | 0.8667 | 0.8525 | 0.9054  |
-| Decision Tree            | 0.7705   | 0.8333    | 0.6667 | 0.7407 | 0.8027  |
-| Random Forest            | 0.8197   | 0.8519    | 0.7667 | 0.8070 | 0.8624  |
-| Random Forest (Tuned)    | 0.7705   | 0.8077    | 0.7000 | 0.7500 | 0.8753  |
+A clinical application would require a defined intended use and endpoint, appropriate ethics and data-governance approvals, representative real-world cohorts, patient/site/time-separated evaluation, independent external validation, calibration analysis, subgroup and fairness assessment, robustness and missing-data testing, prospective evaluation, clinical utility studies, privacy and cybersecurity controls, and applicable regulatory review.
 
-**Best model: Logistic Regression** (F1 = 0.8525, AUC = 0.9054)
-
-### GridSearchCV — Best Hyperparameters (Random Forest)
-```
-n_estimators     : 200
-max_depth        : 10
-min_samples_split: 2
-min_samples_leaf : 2
-```
-
-### 5-Fold Cross-Validation
-
-| Model                 | CV Accuracy       | CV F1             |
-|-----------------------|-------------------|-------------------|
-| Logistic Regression   | 0.7809 ± 0.0290   | 0.7609 ± 0.0549   |
-| Decision Tree         | 0.6491 ± 0.0991   | 0.6513 ± 0.0920   |
-| Random Forest         | 0.7316 ± 0.0459   | 0.7219 ± 0.0437   |
-| Random Forest (Tuned) | 0.7605 ± 0.0432   | 0.7511 ± 0.0368   |
+Do not use this prototype to make medical decisions or delay professional care. Anyone experiencing possible symptoms of a medical emergency should contact local emergency services or seek urgent medical attention.
 
 ---
 
-## 🖼️ Visualizations
+## Future Work
 
-| File                          | Description                                         |
-|-------------------------------|-----------------------------------------------------|
-| `01_class_balance.png`        | Bar chart of target class distribution              |
-| `02_correlation_heatmap.png`  | Lower-triangle feature correlation heatmap          |
-| `03_feature_distributions.png`| KDE + histogram for numerical features by target    |
-| `04_categorical_counts.png`   | Count plots for key categorical features by target  |
-| `05_confusion_matrices.png`   | Confusion matrices for all 4 models                 |
-| `06_roc_curves.png`           | Overlaid ROC curves with AUC scores                 |
-| `07_feature_importance.png`   | Top-15 feature importances (Decision Tree + RF)     |
-| `08_metrics_comparison.png`   | Grouped bar chart: Accuracy/Precision/Recall/F1/AUC |
-| `09_cross_validation.png`     | 5-fold CV accuracy & F1 with error bars             |
+Potential future research directions—not claims of completed functionality—include:
+
+* [ ] Reproduce every reported metric from the final release commit.
+* [ ] Verify one canonical model artifact and evaluation report per experiment.
+* [ ] Add confidence intervals and stronger grouped validation where appropriate.
+* [ ] Audit feature leakage, class imbalance, and threshold selection.
+* [ ] Improve missingness, stale-data, and signal-quality handling.
+* [ ] Document simulation equations and validation boundaries.
+* [ ] Expand ECG research only with permitted data and a defensible evaluation design.
+* [ ] Evaluate future clinical endpoints using appropriately governed real-world cohorts.
+* [ ] Test and document API deployment only after it is deployed.
+* [ ] Add the final architecture, presentation, and demo-video links once the deliverables are verified and publicly accessible.
 
 ---
 
-## 🔧 Future Improvements
+## Team
 
-1. **Real UCI data** — plug in `ucimlrepo` or download `heart.csv` directly from the UCI repository for authentic results
-2. **XGBoost / LightGBM** — gradient-boosting models typically outperform RF on tabular medical data
-3. **SHAP explainability** — use SHAP values for per-prediction feature-level explanations (important for clinical trust)
-4. **Class-imbalance handling** — apply SMOTE or class-weight adjustments for skewed datasets
-5. **Flask / FastAPI REST API** — expose the predictor as a web service
-6. **Streamlit dashboard** — interactive web app for clinicians to enter values and see risk scores
-7. **Threshold tuning** — optimise the classification threshold for Recall (sensitivity) over Accuracy, given the medical context
-8. **Multilingual support** — add Indian-language descriptions in the prediction CLI
+**Team S3P**
+**KPR Institute of Engineering and Technology**
+
+Add verified team-member names, roles, mentor acknowledgements, and competition details only after confirming their accuracy and suitability for public disclosure.
+
+## License
+
+The repository is intended to use the MIT License only if the release includes a matching `LICENSE` file and the project owner has confirmed that the code may be distributed under those terms.
+
+The software license does not automatically relicense external datasets, third-party models, fonts, icons, or other assets. Review each item's terms and preserve required attribution before redistribution.
+
+---
+
+## Final Note
+
+Atria Twin brings together fictional patient context, longitudinal synthetic telemetry, deterministic cardiovascular simulation, and separate machine-learning experiments in one research-oriented interface.
+
+Its value lies in the workflow, experimentation, and transparency of its limitations—not in claiming clinical capabilities that have not been demonstrated.
+
+**Build transparently. Evaluate rigorously. Keep patient safety first.**
 
 ---
 ALL SUBMISSION REQUIREMENTS : https://drive.google.com/drive/folders/1on646SzZObMUAq1k42irUrkGYEGXZruD
