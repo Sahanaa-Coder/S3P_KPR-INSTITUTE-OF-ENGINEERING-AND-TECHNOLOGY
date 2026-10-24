@@ -362,10 +362,11 @@ min_samples_leaf : 2
 8. **Multilingual support** — add Indian-language descriptions in the prediction CLI
 
 ---
+ALL SUBMISSION REQUIREMENTS : https://drive.google.com/drive/folders/1on646SzZObMUAq1k42irUrkGYEGXZruD
 
 ## 👤 Author
 
 **Sahanaa**
-Thiranex AI Internship — 2026
+
 [GitHub](https://github.com/Sahanaa-Coder) · [LinkedIn](https://www.linkedin.com/in/sahanaa-mr-61782a36b)
 ---
